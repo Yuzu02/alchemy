@@ -1,4 +1,5 @@
 # Fork-only regression fixture for alchemy-run/alchemy#3355.
+# Original failing run: https://github.com/Yuzu02/alchemy/actions/runs/43810182680
 # This workflow is intentionally kept off the upstream fix branch.
 name: Issue 3355 - root action archive
 
@@ -14,9 +15,9 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
-      - name: Run the original broken action (expected to fail in Set up job)
+      - name: Run the fixed action from the fork at its exact commit
         id: alchemy
-        uses: alchemy-run/alchemy@d0b4a3326718309793459160e94b35abee517b23
+        uses: Yuzu02/alchemy@d81065db6a92eff666a664cdf50cf2a8cc5c3179
 
       # A push on this branch resolves to action=skip; no deployment occurs.
       - name: Verify the action resolved without deploying
