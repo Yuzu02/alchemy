@@ -1,0 +1,28 @@
+# Fork-only regression fixture for alchemy-run/alchemy#3355.
+# This workflow is intentionally kept off the upstream fix branch.
+name: Issue 3355 - root action archive
+
+on:
+  push:
+    branches: [test/issue-3355-action-e2e]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-action:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+      - name: Run the original broken action (expected to fail in Set up job)
+        id: alchemy
+        uses: alchemy-run/alchemy@d0b4a3326718309793459160e94b35abee517b23
+
+      # A push on this branch resolves to action=skip; no deployment occurs.
+      - name: Verify the action resolved without deploying
+        env:
+          ACTION: ${{ steps.alchemy.outputs.action }}
+          STAGE: ${{ steps.alchemy.outputs.stage }}
+        run: |
+          test "$ACTION" = skip
+          test -z "$STAGE"
