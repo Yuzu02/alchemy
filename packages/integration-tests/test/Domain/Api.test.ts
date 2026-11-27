@@ -308,7 +308,13 @@ const trustedAuthor = (name: string) =>
 class Written extends Domain.Event("Written", { text: Schema.String, by: Schema.String }) {}
 class Write extends Domain.Command("Write", {
   middleware: [AuthorSession],
-  input: { id: Schema.String, text: Schema.String },
+  input: {
+    id: Schema.String,
+    text: Schema.String.pipe(
+      Schema.withDecodingDefaultKey(Effect.succeed("")),
+      Schema.withConstructorDefault(Effect.succeed("")),
+    ),
+  },
   events: [Written],
   reply: { by: Schema.String },
 }) {}
@@ -356,6 +362,30 @@ class NotesApi extends Domain.Api("NotesApi", {
 const World = Notes.layer(NoteViewLive).pipe(Layer.provideMerge(InMemory));
 
 describe("Domain Api in process", { tags: ["unit", "local"] }, () => {
+  it.live("command clients apply constructor defaults and preserve explicit input", () =>
+    Effect.gen(function* () {
+      const notes = yield* NotesApi.clientInProcess;
+      const asSam = { headers: { "x-author": "sam" } };
+
+      type AssertFalse<T extends false> = T;
+      type _WriteRequiresId = AssertFalse<
+        { text: string } extends Parameters<typeof notes.Write>[0] ? true : false
+      >;
+
+      const defaulted = yield* notes.Write({ id: "defaulted" }, asSam);
+      expect(yield* notes.NoteView.get("defaulted", { ...asSam, atLeast: defaulted })).toEqual({
+        text: "",
+        by: "sam",
+      });
+
+      const explicit = yield* notes.Write({ id: "explicit", text: "hello" }, asSam);
+      expect(yield* notes.NoteView.get("explicit", { ...asSam, atLeast: explicit })).toEqual({
+        text: "hello",
+        by: "sam",
+      });
+    }).pipe(Effect.scoped, Effect.provide(Layer.mergeAll(World, AuthorSessionLive))),
+  );
+
   it.live("clientInProcess calls an Api in process, through every entry's middleware", () =>
     Effect.gen(function* () {
       const notes = yield* NotesApi.clientInProcess;

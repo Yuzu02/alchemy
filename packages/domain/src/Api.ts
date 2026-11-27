@@ -293,7 +293,11 @@ type CommandArgs<Input> = {} extends Input
   ? [input?: Input, options?: CommandOptions]
   : [input: Input, options?: CommandOptions];
 
-/** The typed client of a command exposed in an Api: `bank.WithdrawMoney(input, options)`. */
+/**
+ * The typed client of a command exposed in an Api: `bank.WithdrawMoney(input, options)`.
+ * Input uses the command schema's constructor type, so fields with a
+ * constructor default may be omitted.
+ */
 export type CommandClient<C extends Command.Any> =
   C["rpc"] extends Rpc.Rpc<
     infer _Tag,
@@ -303,7 +307,7 @@ export type CommandClient<C extends Command.Any> =
     infer Middleware,
     infer _Requires
   >
-    ? Payload["Type"] extends { readonly input: infer Input }
+    ? Rpc.PayloadConstructor<C["rpc"]> extends { readonly input: infer Input }
       ? (
           ...args: CommandArgs<Input>
         ) => Effect.Effect<

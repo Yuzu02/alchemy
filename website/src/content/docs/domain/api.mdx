@@ -64,7 +64,7 @@ Policies, projections and external systems are never on an Api. They run inside 
 
 ### Commands
 
-A command becomes a method that takes its input, and returns the receipt with the reply. Its middleware runs first, and whatever implements it, an aggregate or a [decision](/domain/decision), has the final say.
+A command becomes a method that takes its input and returns the receipt with the reply. Fields with a constructor default can be omitted, just as with the command's `make` method. Its middleware runs first, and whatever implements it, an aggregate or a [decision](/domain/decision), has the final say.
 
 The receipt has the `stream` and `version` the command committed at. `commits` lists every stream it committed to: more than one for a command a decision implements.
 
